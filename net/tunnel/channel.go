@@ -15,19 +15,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.";
  */
 
-package ss
+package tunnel
 
 import (
-	"errors"
+	"galaxy/net/tunnel/tconn"
 )
 
-var (
-	ErrInvalidMessage = errors.New("Invalid Message")
-)
-
-type AddressRequest struct {
-	ATYP byte
-	ADDR string
-	PORT uint16
-	BUF  []byte
+func TConnChanel(tc tconn.IConn, c chan []byte) {
+	defer close(c)
+	for {
+		if data, err := tc.Read(); err != nil {
+			break
+		} else {
+			c <- data
+		}
+	}
 }

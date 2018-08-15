@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.";
  */
 
-package tunnel
+package tconn
 
 import (
 	"fmt"
@@ -29,22 +29,29 @@ type Socks5Listener struct {
 	passwd      string
 }
 
+/*
+ * Socks5 Server Conn
+ */
 type Socks5SConn struct {
-	conn   *Conn
+	TConn
 	uname  string
 	passwd string
 
 	reqBuf []byte
 }
 
-func NewSocks5Listener(network, address string) (*Socks5Listener, error) {
-	netListener, err := net.Listen(network, address)
+func NewSocks5Listener(address string) (*Socks5Listener, error) {
+	netListener, err := net.Listen("tcp", address)
 	if err != nil {
 		return nil, err
 	}
 	return &Socks5Listener{
 		netListener: netListener,
 	}, nil
+}
+
+func (l *Socks5Listener) Close() {
+	defer l.netListener.Close()
 }
 
 func (l *Socks5Listener) SetAuth(uname, passwd string) {
@@ -58,7 +65,9 @@ func (l *Socks5Listener) Accept() (*Socks5SConn, error) {
 		return nil, err
 	}
 	return &Socks5SConn{
-		conn:   NewConn(netConn),
+		TConn: TConn{
+			conn: NewConn(netConn),
+		},
 		uname:  l.uname,
 		passwd: l.passwd,
 	}, nil
@@ -178,19 +187,5 @@ func (sc *Socks5SConn) Read() ([]byte, error) {
 		sc.reqBuf = nil
 		return buf, nil
 	}
-	buf := make([]byte, 4096)
-	if n, err := sc.conn.Read(buf); err != nil {
-		return nil, err
-	} else {
-		return buf[:n], nil
-	}
-}
-
-func (sc *Socks5SConn) Write(data []byte) error {
-	_, err := sc.conn.Write(data)
-	return err
-}
-
-func (sc *Socks5SConn) Close() {
-	defer sc.conn.Close()
+	return sc.TConn.Read()
 }

@@ -141,7 +141,7 @@ func (rep *UsernamePasswordReply) Build() []byte {
 	return buf
 }
 
-func parseAddrPort(buf []byte) (byte, string, uint16, []byte, error) {
+func ParseAddrPort(buf []byte) (byte, string, uint16, []byte, error) {
 	if len(buf) < 1 {
 		return 0, "", 0, nil, ErrInvalidMessage
 	}
@@ -174,7 +174,7 @@ func parseAddrPort(buf []byte) (byte, string, uint16, []byte, error) {
 	return atype, addr, port, buf[2:], nil
 }
 
-func buildAddrPort(atype byte, addr string, port uint16) []byte {
+func BuildAddrPort(atype byte, addr string, port uint16) []byte {
 	buf := bytes.Buffer{}
 	binary.Write(&buf, binary.BigEndian, atype)
 	if atype == ATypeDomain {
@@ -197,13 +197,25 @@ func ParseSocks5Request(buf []byte) (*Socks5Request, error) {
 	}
 	ver := buf[0]
 	cmd := buf[1]
-	atype, addr, port, buf, err := parseAddrPort(buf[3:])
+	atype, addr, port, buf, err := ParseAddrPort(buf[3:])
 	if err != nil {
 		return nil, err
 	}
 	req := NewSocks5Request(ver, cmd, atype, addr, port)
 	req.BUF = buf
 	return req, nil
+}
+
+/* 判断地址类型 */
+func GetAddrAType(addr string) byte {
+	ip := net.ParseIP(addr)
+	if ip == nil {
+		return ATypeDomain
+	}
+	if len(ip) == 4 {
+		return ATypeIPv4
+	}
+	return ATypeIPv6
 }
 
 func NewSocks5Request(ver, cmd, atype byte, addr string, port uint16) *Socks5Request {
@@ -221,7 +233,7 @@ func (req *Socks5Request) Build() []byte {
 	binary.Write(&buf, binary.BigEndian, req.VER)
 	binary.Write(&buf, binary.BigEndian, req.CMD)
 	binary.Write(&buf, binary.BigEndian, uint8(0))
-	binary.Write(&buf, binary.BigEndian, buildAddrPort(req.ATYP, req.ADDR, req.PORT))
+	binary.Write(&buf, binary.BigEndian, BuildAddrPort(req.ATYP, req.ADDR, req.PORT))
 	return buf.Bytes()
 }
 
@@ -231,7 +243,7 @@ func ParseSocks5Reply(buf []byte) (*Socks5Reply, error) {
 	}
 	ver := buf[0]
 	rep := buf[1]
-	atype, addr, port, buf, err := parseAddrPort(buf[3:])
+	atype, addr, port, buf, err := ParseAddrPort(buf[3:])
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +267,7 @@ func (rep *Socks5Reply) Build() []byte {
 	binary.Write(&buf, binary.BigEndian, rep.VER)
 	binary.Write(&buf, binary.BigEndian, rep.REP)
 	binary.Write(&buf, binary.BigEndian, uint8(0))
-	binary.Write(&buf, binary.BigEndian, buildAddrPort(rep.ATYP, rep.ADDR, rep.PORT))
+	binary.Write(&buf, binary.BigEndian, BuildAddrPort(rep.ATYP, rep.ADDR, rep.PORT))
 	return buf.Bytes()
 }
 
@@ -264,7 +276,7 @@ func ParseSocks5UDPMessage(buf []byte) (*Socks5UDPMessage, error) {
 		return nil, ErrInvalidMessage
 	}
 	frag := buf[2]
-	atype, addr, port, buf, err := parseAddrPort(buf[3:])
+	atype, addr, port, buf, err := ParseAddrPort(buf[3:])
 	if err != nil {
 		return nil, err
 	}
@@ -285,7 +297,7 @@ func (m *Socks5UDPMessage) Build() []byte {
 	buf := bytes.Buffer{}
 	binary.Write(&buf, binary.BigEndian, uint16(0x0))
 	binary.Write(&buf, binary.BigEndian, m.FRAG)
-	binary.Write(&buf, binary.BigEndian, buildAddrPort(m.ATYP, m.ADDR, m.PORT))
+	binary.Write(&buf, binary.BigEndian, BuildAddrPort(m.ATYP, m.ADDR, m.PORT))
 	binary.Write(&buf, binary.BigEndian, m.DATA)
 	return buf.Bytes()
 }

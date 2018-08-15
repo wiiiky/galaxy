@@ -14,20 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.";
  */
+package tunnel
 
-package ss
-
-import (
-	"errors"
-)
-
-var (
-	ErrInvalidMessage = errors.New("Invalid Message")
-)
-
-type AddressRequest struct {
-	ATYP byte
-	ADDR string
-	PORT uint16
-	BUF  []byte
+type Tunnel interface {
+	Run()
+	Name() string
+	IsRunning() bool
+	Quit()
 }

@@ -18,16 +18,23 @@
 package ss
 
 import (
-	"errors"
+	"galaxy/protocol/socks"
+	"testing"
 )
 
-var (
-	ErrInvalidMessage = errors.New("Invalid Message")
-)
+func testAddressRequest(t *testing.T, atype byte, addr string, port uint16) {
+	req := NewAddressRequest(atype, addr, port)
+	if req.ATYP != atype {
+		t.Fatal("Wrong ATYP")
+	} else if req.ADDR != addr {
+		t.Fatal("Wrong ADDR")
+	} else if req.PORT != port {
+		t.Fatal("Wrong PORT")
+	}
+}
 
-type AddressRequest struct {
-	ATYP byte
-	ADDR string
-	PORT uint16
-	BUF  []byte
+func TestAddressRequest(t *testing.T) {
+	testAddressRequest(t, socks.ATypeIPv4, "127.0.0.1", 1234)
+	testAddressRequest(t, socks.ATypeDomain, "www.baidu.com", 2334)
+	testAddressRequest(t, socks.ATypeIPv6, "::1", 22311)
 }

@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.";
  */
 
-package tunnel
+package tconn
 
 import (
 	"net"
@@ -52,4 +52,37 @@ func Dial(network, address string) (*Conn, error) {
 	return &Conn{
 		Conn: c,
 	}, nil
+}
+
+type TConn struct {
+	conn *Conn
+}
+
+func NewTConn(c *Conn) *TConn {
+	return &TConn{
+		conn: c,
+	}
+}
+
+func (t *TConn) Read() ([]byte, error) {
+	buf := make([]byte, 4096)
+	if n, err := t.conn.Read(buf); err != nil {
+		return nil, err
+	} else {
+		return buf[:n], nil
+	}
+}
+
+func (t *TConn) Write(data []byte) error {
+	_, err := t.conn.Write(data)
+	return err
+}
+
+func (t *TConn) Close() {
+	defer t.conn.Close()
+}
+
+type IConn interface {
+	Read() ([]byte, error)
+	Write([]byte) error
 }

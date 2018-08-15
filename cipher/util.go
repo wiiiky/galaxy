@@ -18,13 +18,24 @@
 package cipher
 
 import (
-	_cipher "crypto/cipher"
+	"crypto/cipher"
+	"crypto/rand"
 )
 
-func cipherStreamXOR(stream _cipher.Stream, data []byte) []byte {
+func cipherStreamXOR(stream cipher.Stream, data []byte) []byte {
 	if data == nil || len(data) == 0 {
 		return nil
 	}
 	stream.XORKeyStream(data, data)
 	return data
+}
+
+/* 创建随机字符串 */
+func RandKey(l int) []byte {
+	if l <= 0 {
+		return nil
+	}
+	key := make([]byte, l)
+	rand.Read(key)
+	return key
 }
